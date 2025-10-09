@@ -30,8 +30,8 @@ Thank you for your interest in contributing to this project!
 ## Development Setup
 
 ```bash
-git clone https://github.com/yourusername/spotify-flac-downloader.git
-cd spotify-flac-downloader
+git clone https://github.com/instax-dutta/flac_bulk_download.git
+cd flac_bulk_download
 python3 setup.py
 ```
 

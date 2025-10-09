@@ -10,6 +10,7 @@ A Python tool to bulk download FLAC lossless music tracks from Spotify playlists
 - **Smart Error Handling**: Continues processing even if some tracks fail
 - **Progress Tracking**: Real-time progress updates and failure logging
 - **No Account Required**: Uses free Hifi API (no Tidal subscription needed)
+- **🌐 Web App Coming Soon**: User-friendly web interface for easy playlist management
 
 ## 🚀 Quick Start
 
@@ -57,7 +58,7 @@ This will:
 ## 📁 File Structure
 
 ```
-spotify-flac-downloader/
+flac_bulk_download/
 ├── extract_tracks_from_csv.py    # Extract tracks from CSV export
 ├── download_flac_tracks.py       # Main downloader (API-based)
 ├── download_tracks_hifi_cli.py   # Alternative CLI-based downloader
@@ -82,8 +83,8 @@ spotify-flac-downloader/
 
 1. **Clone this repository:**
 ```bash
-   git clone https://github.com/yourusername/spotify-flac-downloader.git
-   cd spotify-flac-downloader
+   git clone https://github.com/instax-dutta/flac_bulk_download.git
+   cd flac_bulk_download
    ```
 
 2. **Install dependencies:**
@@ -219,6 +220,19 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Hifi API](https://tidal.401658.xyz) for providing free access to Tidal's music library
 - **[Exportify](https://exportify.net/)** for making Spotify playlist export easy and secure
 - The open-source community for inspiration and support
+
+## 🌐 Web App Coming Soon
+
+We're working on a user-friendly web interface that will make the entire process even easier:
+
+- **🎯 Drag & Drop**: Simply drag your CSV file to start processing
+- **📊 Real-time Progress**: Visual progress bars and download statistics
+- **🎵 Playlist Preview**: See your tracks before downloading
+- **⚙️ Settings Panel**: Configure quality, timeouts, and other options
+- **📱 Mobile Friendly**: Works on all devices
+- **☁️ Cloud Processing**: No need to install anything locally
+
+**Stay tuned for updates!** ⭐ Star this repository to get notified when the web app launches.
 
 ## 📈 Stats
 
