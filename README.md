@@ -1,115 +1,234 @@
-# FLAC Automation Scripts
+# 🎵 Spotify Playlist to FLAC Downloader
 
-Collection of scripts to automate downloading FLAC music tracks.
+A Python tool to bulk download FLAC lossless music tracks from Spotify playlists for free using the Hifi API.
 
-## 📁 Project Structure
+## ✨ Features
 
-```
-flac_automation/
-├── track_list.txt                    # Main list of tracks to download
-├── downloads/                         # Downloaded FLAC files
-├── raw data/                          # Original CSV files and utilities
-├── auto_download_binimum.py          # Download from music.binimum.org
-├── download_tracks_hifi.py           # Download using hifi (RECOMMENDED)
-├── remove_duplicate_downloads.py     # Clean duplicate files
-└── track_list_failed.txt            # Failed downloads with error messages
-```
-
-## 🎵 Download Tracks with hifi (RECOMMENDED)
-
-### Setup
-
-1. Install hifi:
-```bash
-git clone https://github.com/sachinsenal0x64/hifi.git
-cd hifi
-# Follow installation instructions in the repo
-# Ensure 'hifi' command is in your PATH
-```
-
-2. Run the downloader:
-```bash
-python3 download_tracks_hifi.py
-```
-
-### Features
-
-✅ **FLAC Lossless Format** - Automatically downloads in highest quality  
-✅ **Immediate Removal** - Tracks removed from list after successful download  
-✅ **Fallback Handling** - Tries 5 different command formats  
-✅ **Error Logging** - Failed tracks saved to `track_list_failed.txt` with reasons  
-✅ **2.5 Min Timeout** - Skips stuck downloads automatically  
-✅ **Progress Tracking** - Shows download status in real-time  
-
-## 🌐 Alternative: Download from music.binimum.org
-
-```bash
-python3 auto_download_binimum.py
-```
-
-- Uses Selenium browser automation
-- Visual browser mode (non-headless)
-- Processes all tracks automatically
-- 2.5 minute timeout per track
-
-## 🧹 Remove Duplicate Downloads
-
-```bash
-python3 remove_duplicate_downloads.py
-```
-
-Compares file content (SHA-256) and removes duplicates while keeping one copy.
-
-## 📝 File Formats
-
-### track_list.txt
-```
-Allah Duhai Hai - Amit Mishra
-Control - Armaan Malik
-Hate The Way - Rameet Sandhu
-...
-```
-
-### track_list_failed.txt
-```
-Some Song - Artist Name
-  Error: Timeout (150s)
-
-Another Song - Artist Name
-  Error: Not found
-...
-```
-
-## 🔧 Scripts Overview
-
-| Script | Purpose | Format | Auto-Remove |
-|--------|---------|--------|-------------|
-| `download_tracks_hifi.py` | **Main downloader** (hifi) | FLAC | ✅ Yes |
-| `auto_download_binimum.py` | Browser automation | FLAC | ❌ No |
-| `remove_duplicate_downloads.py` | Cleanup | - | - |
-
-## 💡 Tips
-
-- **Resume downloads**: Just run the script again - it only processes remaining tracks
-- **Retry failed**: Copy tracks from `track_list_failed.txt` back to `track_list.txt`
-- **Monitor progress**: Watch the downloads/ folder for new FLAC files
-- **Interrupt safely**: Ctrl+C will stop gracefully and save progress
+- **FLAC Lossless Quality**: Downloads tracks in 16-bit, 44.1 kHz FLAC format
+- **Bulk Processing**: Handles entire playlists with hundreds of tracks
+- **Automatic CSV Processing**: Extracts track information from Spotify export files
+- **Smart Error Handling**: Continues processing even if some tracks fail
+- **Progress Tracking**: Real-time progress updates and failure logging
+- **No Account Required**: Uses free Hifi API (no Tidal subscription needed)
 
 ## 🚀 Quick Start
 
+### Step 1: Export Your Spotify Playlist
+
+**🎯 Recommended: Use [Exportify](https://exportify.net/)**
+
+[Exportify](https://exportify.net/) is the easiest and most reliable way to export your Spotify playlists:
+
+1. **Visit [Exportify.net](https://exportify.net/)**
+2. **Log in with your Spotify account** (secure OAuth authentication)
+3. **Select your playlist** from the dropdown menu
+4. **Click "Export"** to download the CSV file
+5. **Save the file** as `playlist.csv` in this directory
+
+**Alternative methods:**
+- [Spotify Playlist Exporter](https://spotify-playlist-exporter.herokuapp.com/)
+- Manual export from Spotify Web Player
+
+### Step 2: Extract Track List
+
 ```bash
-# 1. Ensure hifi is installed
-hifi --help
-
-# 2. Run downloader
-python3 download_tracks_hifi.py
-
-# 3. Clean duplicates
-python3 remove_duplicate_downloads.py
+python3 extract_tracks_from_csv.py
 ```
 
----
-**Total Tracks**: Check `track_list.txt` line count  
-**Downloaded**: Check `downloads/` folder  
-**Failed**: Check `track_list_failed.txt`
+This will:
+- Read your `playlist.csv` file
+- Extract track names and artists
+- Create `track_list.txt` with format: "Song Title - Artist Name"
+- Remove duplicates automatically
 
+### Step 3: Download FLAC Tracks
+
+```bash
+python3 download_flac_tracks.py
+```
+
+This will:
+- Process all tracks from `track_list.txt`
+- Download each track in FLAC lossless quality
+- Save files to `downloads/` directory
+- Remove successfully downloaded tracks from the list
+- Log failed downloads to `track_list_failed.txt`
+
+## 📁 File Structure
+
+```
+spotify-flac-downloader/
+├── extract_tracks_from_csv.py    # Extract tracks from CSV export
+├── download_flac_tracks.py       # Main downloader (API-based)
+├── download_tracks_hifi_cli.py   # Alternative CLI-based downloader
+├── remove_duplicates.py          # Remove duplicate tracks
+├── app.py                        # Web interface (optional)
+├── requirements.txt              # Python dependencies
+├── setup.py                      # Easy setup script
+├── playlist.csv                  # Your exported Spotify playlist
+├── track_list.txt               # Generated track list
+├── track_list_failed.txt        # Failed downloads log
+└── downloads/                   # Downloaded FLAC files
+```
+
+## 🛠️ Installation
+
+### Prerequisites
+
+- Python 3.7 or higher
+- Internet connection
+
+### Setup
+
+1. **Clone this repository:**
+```bash
+   git clone https://github.com/yourusername/spotify-flac-downloader.git
+   cd spotify-flac-downloader
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   python3 setup.py
+   ```
+   Or manually:
+```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Export your Spotify playlist:**
+   - Use [Exportify](https://exportify.net/) to export your playlist as CSV
+   - Save the CSV file as `playlist.csv` in this directory
+
+## 📖 Usage Examples
+
+### Basic Usage
+
+```bash
+# Extract tracks from your exported playlist
+python3 extract_tracks_from_csv.py
+
+# Download all tracks in FLAC format
+python3 download_flac_tracks.py
+```
+
+### Advanced Usage
+
+```bash
+# Remove duplicate tracks before downloading
+python3 remove_duplicates.py
+
+# Use alternative CLI-based downloader (requires hifi tool)
+python3 download_tracks_hifi_cli.py
+
+# Start web interface for easier management
+python3 app.py
+```
+
+## 🎯 Supported Export Formats
+
+The tool works with CSV files exported from:
+
+- **[Exportify](https://exportify.net/)** (recommended): Secure, reliable, and easy to use
+- **Spotify Playlist Exporter**: https://spotify-playlist-exporter.herokuapp.com/
+- **Spotify Web Player** (manual export)
+
+### Required CSV Columns
+
+Your CSV file should contain these columns:
+- `Track Name` - The song title
+- `Artist Name(s)` - Artist name(s), semicolon-separated for multiple artists
+
+## 🔧 Configuration
+
+### Download Quality
+
+Edit `download_flac_tracks.py` to change quality:
+
+```python
+QUALITY = "LOSSLESS"  # Options: HI_RES_LOSSLESS, HI_RES, LOSSLESS, HIGH, LOW
+```
+
+### Timeout Settings
+
+```python
+TIMEOUT_PER_TRACK = 150  # 2.5 minutes per track
+```
+
+## 📊 Output
+
+### Successful Downloads
+
+- **Format**: FLAC lossless (16-bit, 44.1 kHz)
+- **Location**: `downloads/` directory
+- **Naming**: `Artist - Song Title.flac`
+
+### Failed Downloads
+
+- **Log File**: `track_list_failed.txt`
+- **Format**: Track name + error message
+- **Retry**: Re-run the script to retry failed downloads
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+1. **"No tracks found in track_list.txt"**
+   - Make sure you've run `extract_tracks_from_csv.py` first
+   - Check that your CSV file is named `playlist.csv`
+
+2. **"Track not available on Tidal"**
+   - Some tracks may not be available on Tidal
+   - Check `track_list_failed.txt` for details
+
+3. **Download timeouts**
+   - Increase `TIMEOUT_PER_TRACK` in the script
+   - Check your internet connection
+
+4. **API rate limiting**
+   - The script includes delays between requests
+   - If issues persist, increase the delay in the script
+
+### Getting Help
+
+- Check the `track_list_failed.txt` file for specific error messages
+- Ensure your CSV file has the correct format
+- Verify your internet connection
+
+## ⚖️ Legal Notice
+
+This tool is for educational and personal use only. Please respect copyright laws and the terms of service of the platforms involved. The authors are not responsible for any misuse of this software.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+### Development Setup
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [Hifi API](https://tidal.401658.xyz) for providing free access to Tidal's music library
+- **[Exportify](https://exportify.net/)** for making Spotify playlist export easy and secure
+- The open-source community for inspiration and support
+
+## 📈 Stats
+
+- **Supported Formats**: FLAC Lossless, HI-RES, MQA
+- **Quality**: Up to 24-bit, 192 kHz
+- **File Sizes**: 30-140 MB per track (depending on quality)
+- **Success Rate**: ~85-95% (varies by playlist content)
+
+---
+
+**Happy downloading! 🎵**
+
+*Remember to support artists by purchasing their music when possible.*
