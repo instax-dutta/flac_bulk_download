@@ -1,106 +1,301 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Downloads - Player</title>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FLAC Bulk Downloader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; margin: 24px; }
-      .container { max-width: 960px; margin: 0 auto; }
-      .track { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid #eee; }
-      audio { width: 100%; }
-      .meta { flex: 1; margin-right: 12px; }
-      .name { font-weight: 600; word-break: break-word; }
-      form { margin: 0; }
-      button { background: #e11d48; color: white; border: 0; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
-      button:hover { background: #be123c; }
-      .flash { padding: 8px 12px; border-radius: 6px; margin-bottom: 16px; }
-      .success { background: #ecfdf5; color: #065f46; }
-      .warning { background: #fffbeb; color: #92400e; }
-      .error { background: #fef2f2; color: #991b1b; }
-      header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 16px; }
-      .badge { background:#eef2ff; color:#3730a3; border-radius: 999px; padding: 2px 8px; font-size:12px; }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <header>
-        <h1>Downloaded Tracks</h1>
-        <div class="badge">{{ tracks|length }} files</div>
-      </header>
-
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          {% for category, message in messages %}
-            <div class="flash {{ category }}">{{ message }}</div>
-          {% endfor %}
-        {% endif %}
-      {% endwith %}
-
-      {% if not tracks %}
-        <p>No audio files found in the downloads folder.</p>
-      {% else %}
-        {% for name in tracks %}
-          <div class="track">
-            <div class="meta">
-              <div class="name">{{ name }}</div>
-              <audio controls preload="none" class="player">
-                <source src="{{ url_for('serve_audio', filename=name) }}" type="audio/flac" />
-                Your browser does not support the audio element.
-              </audio>
-            </div>
-            <form method="post" action="{{ url_for('delete_track', filename=name) }}">
-              <button type="submit">Delete</button>
-            </form>
-          </div>
-        {% endfor %}
-      {% endif %}
-    </div>
-    <script>
-      // Ensure only one audio element plays at a time
-      (function () {
-        const players = Array.from(document.querySelectorAll('audio.player'));
-        players.forEach((p) => {
-          p.addEventListener('play', () => {
-            players.forEach((other) => {
-              if (other !== p && !other.paused) {
-                other.pause();
-              }
-            });
-          });
-        });
-      })();
-
-      // Preserve scroll position across delete redirects
-      (function () {
-        const KEY = 'downloads_scroll_top';
-
-        // Restore on load
-        const saved = sessionStorage.getItem(KEY);
-        if (saved) {
-          const y = parseInt(saved, 10);
-          if (!Number.isNaN(y)) {
-            window.scrollTo(0, y);
-          }
-          // One-time restore
-          sessionStorage.removeItem(KEY);
+        body {
+            font-family: 'Inter', sans-serif;
         }
 
-        // Before submitting any delete form, save scroll
-        document.addEventListener('submit', function (e) {
-          const target = e.target;
-          if (target && target.tagName === 'FORM' && target.action.includes('/delete/')) {
-            sessionStorage.setItem(KEY, String(window.scrollY || document.documentElement.scrollTop));
-          }
-        }, true);
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-        // Fallback: also save before unload
-        window.addEventListener('beforeunload', function () {
-          sessionStorage.setItem(KEY, String(window.scrollY || document.documentElement.scrollTop));
-        });
-      })();
+        .progress-bar {
+            transition: width 0.5s ease-in-out;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #444;
+        }
+    </style>
+</head>
+
+<body class="bg-zinc-950 text-white min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3">
+                        </path>
+                    </svg>
+                </div>
+                <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-400">FLAC
+                    Downloader</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="status-badge"
+                    class="px-3 py-1 rounded-full text-xs font-medium bg-zinc-800 text-zinc-400 border border-zinc-700">Idle</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-7xl mx-auto px-6 py-8 w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        <!-- Left Column: Controls -->
+        <div class="lg:col-span-1 space-y-6">
+
+            <!-- Upload Card -->
+            <div class="glass rounded-2xl p-6 border border-zinc-800">
+                <h2 class="text-lg font-semibold mb-4 text-zinc-200">1. Upload Playlist</h2>
+                <form id="upload-form" action="/upload" method="post" enctype="multipart/form-data" class="space-y-4">
+                    <div class="relative group">
+                        <input type="file" name="file" id="file-input" accept=".csv"
+                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            onchange="updateFileName(this)">
+                        <div
+                            class="border-2 border-dashed border-zinc-700 rounded-xl p-8 text-center transition-colors group-hover:border-emerald-500/50 group-hover:bg-zinc-900/50">
+                            <div
+                                class="w-12 h-12 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-3 text-zinc-400 group-hover:text-emerald-400 transition-colors">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                                    </path>
+                                </svg>
+                            </div>
+                            <p id="file-label" class="text-sm text-zinc-400 font-medium">Drop playlist.csv here or click
+                                to browse</p>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <a href="https://exportify.net" target="_blank"
+                            class="text-xs text-emerald-500 hover:text-emerald-400 hover:underline transition-colors">
+                            Need a CSV? Get it from Exportify.net ↗
+                        </a>
+                    </div>
+                    <button type="submit"
+                        class="w-full py-2.5 bg-zinc-100 text-zinc-900 rounded-lg font-semibold hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Add
+                        to Queue</button>
+                </form>
+            </div>
+
+            <!-- Download Control Card -->
+            <div class="glass rounded-2xl p-6 border border-zinc-800">
+                <h2 class="text-lg font-semibold mb-4 text-zinc-200">2. Control Center</h2>
+                <div class="space-y-4">
+                    <div class="flex justify-between text-sm text-zinc-400">
+                        <span>Queue Size:</span>
+                        <span id="track-count" class="text-white font-mono">0</span>
+                    </div>
+                    <button id="start-btn" onclick="startDownload()"
+                        class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-lg font-bold shadow-lg shadow-emerald-900/20 hover:shadow-emerald-900/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                        Start Download
+                    </button>
+                    <button id="cleanup-btn" onclick="cleanupDuplicates()"
+                        class="w-full py-2 bg-zinc-800 text-zinc-300 rounded-lg font-medium hover:bg-zinc-700 transition-colors border border-zinc-700">
+                        🧹 Cleanup Duplicates
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Card -->
+            <div class="glass rounded-2xl p-6 border border-zinc-800">
+                <h3 class="text-sm font-medium text-zinc-400 mb-4 uppercase tracking-wider">Statistics</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-zinc-900/50 rounded-lg p-3 border border-zinc-800">
+                        <div class="text-2xl font-bold text-emerald-400" id="stat-success">0</div>
+                        <div class="text-xs text-zinc-500">Success</div>
+                    </div>
+                    <div class="bg-zinc-900/50 rounded-lg p-3 border border-zinc-800">
+                        <div class="text-2xl font-bold text-rose-400" id="stat-failed">0</div>
+                        <div class="text-xs text-zinc-500">Failed</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Progress & Logs -->
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- Progress Section -->
+            <div class="glass rounded-2xl p-6 border border-zinc-800">
+                <div class="flex justify-between items-end mb-2">
+                    <div>
+                        <h2 class="text-lg font-semibold text-zinc-200">Progress</h2>
+                        <p id="current-track" class="text-sm text-zinc-400 mt-1 h-5 truncate">Waiting to start...</p>
+                    </div>
+                    <span id="percentage" class="text-2xl font-bold text-zinc-200">0%</span>
+                </div>
+                <div class="h-3 bg-zinc-800 rounded-full overflow-hidden">
+                    <div id="progress-bar"
+                        class="h-full bg-gradient-to-r from-emerald-500 to-teal-500 w-0 progress-bar"></div>
+                </div>
+            </div>
+
+            <!-- Logs Console -->
+            <div class="glass rounded-2xl border border-zinc-800 flex flex-col h-96">
+                <div
+                    class="p-4 border-b border-zinc-800 bg-zinc-900/30 rounded-t-2xl flex justify-between items-center">
+                    <h3 class="text-sm font-medium text-zinc-300">Live Logs</h3>
+                    <div class="flex gap-2">
+                        <div class="w-2.5 h-2.5 rounded-full bg-rose-500"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                    </div>
+                </div>
+                <div id="logs-container"
+                    class="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-2 text-zinc-400 bg-zinc-950/30 rounded-b-2xl">
+                    <div class="text-zinc-600 italic">System ready...</div>
+                </div>
+            </div>
+
+            <!-- Downloaded Files List -->
+            <div class="glass rounded-2xl p-6 border border-zinc-800">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-zinc-200">Downloaded Files</h2>
+                    <button onclick="refreshFiles()" class="text-xs text-emerald-400 hover:text-emerald-300">Refresh
+                        List</button>
+                </div>
+                <div id="files-list" class="space-y-2 max-h-60 overflow-y-auto pr-2">
+                    <!-- Files injected here -->
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        function updateFileName(input) {
+            const label = document.getElementById('file-label');
+            if (input.files && input.files[0]) {
+                label.textContent = input.files[0].name;
+                label.classList.add('text-emerald-400');
+            }
+        }
+
+        function startDownload() {
+            fetch('/start-download', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'started') {
+                        document.getElementById('start-btn').disabled = true;
+                        document.getElementById('start-btn').textContent = 'Downloading...';
+                    } else if (data.message) {
+                        alert(data.message);
+                    }
+                });
+        }
+
+        function cleanupDuplicates() {
+            const btn = document.getElementById('cleanup-btn');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Cleaning...';
+
+            fetch('/cleanup', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    refreshFiles(); // Refresh file list as items might be deleted
+                })
+                .catch(err => {
+                    console.error(err);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                });
+        }
+
+        function refreshFiles() {
+            fetch('/files')
+                .then(res => res.json())
+                .then(files => {
+                    const container = document.getElementById('files-list');
+                    container.innerHTML = files.map(f => `
+                        <div class="flex items-center justify-between p-3 bg-zinc-900/50 rounded-lg border border-zinc-800 hover:border-zinc-700 transition-colors group">
+                            <div class="flex items-center gap-3 overflow-hidden">
+                                <div class="w-8 h-8 bg-zinc-800 rounded flex items-center justify-center text-zinc-500">🎵</div>
+                                <span class="text-sm text-zinc-300 truncate">${f}</span>
+                            </div>
+                            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <a href="/downloads/${f}" class="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-700 rounded" title="Download">⬇️</a>
+                            </div>
+                        </div>
+                    `).join('');
+                });
+        }
+
+        // Poll for status updates
+        setInterval(() => {
+            fetch('/status')
+                .then(res => res.json())
+                .then(data => {
+                    // Update Progress
+                    const percent = data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0;
+                    document.getElementById('progress-bar').style.width = percent + '%';
+                    document.getElementById('percentage').textContent = percent + '%';
+                    document.getElementById('current-track').textContent = data.current_track || (data.is_downloading ? 'Processing...' : 'Idle');
+
+                    // Update Stats
+                    document.getElementById('stat-success').textContent = data.success;
+                    document.getElementById('stat-failed').textContent = data.failed;
+                    document.getElementById('track-count').textContent = data.total;
+
+                    // Update Badge
+                    const badge = document.getElementById('status-badge');
+                    if (data.is_downloading) {
+                        badge.textContent = 'Running';
+                        badge.className = 'px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 animate-pulse';
+                        document.getElementById('start-btn').disabled = true;
+                    } else {
+                        badge.textContent = 'Idle';
+                        badge.className = 'px-3 py-1 rounded-full text-xs font-medium bg-zinc-800 text-zinc-400 border border-zinc-700';
+                        document.getElementById('start-btn').disabled = false;
+                        document.getElementById('start-btn').textContent = 'Start Download';
+                    }
+
+                    // Update Logs
+                    const logsContainer = document.getElementById('logs-container');
+                    logsContainer.innerHTML = data.logs.map(log => `
+                        <div class="border-l-2 ${log.includes('Success') ? 'border-emerald-500 text-emerald-400/80' : log.includes('Failed') ? 'border-rose-500 text-rose-400/80' : 'border-zinc-700'} pl-2 py-0.5">
+                            ${log}
+                        </div>
+                    `).join('');
+                });
+        }, 1000);
+
+        // Initial load
+        refreshFiles();
     </script>
-  </body>
-  </html>
+</body>
 
-
+</html>
